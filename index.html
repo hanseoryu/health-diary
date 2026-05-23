@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1D9E75">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="건강일기">
+<title>건강 일기</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --green: #1D9E75; --green-light: #E1F5EE; --green-mid: #5DCAA5; --green-dark: #0F6E56;
+  --purple: #534AB7; --purple-light: #EEEDFE; --purple-mid: #7F77DD;
+  --orange: #D85A30; --orange-light: #FAECE7; --orange-dark: #993C1D;
+  --amber: #BA7517; --amber-light: #FAEEDA;
+  --red: #A32D2D; --red-light: #FCEBEB;
+  --lime-light: #EAF3DE; --lime: #639922; --lime-dark: #27500A;
+  --bg: #f5f5f3; --card: #ffffff; --border: rgba(0,0,0,0.1);
+  --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+  --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a18; --card: #242422; --border: rgba(255,255,255,0.1);
+    --text: #f0ede8; --text2: #b4b2a9; --text3: #888780;
+    --green-light: #0a2e22; --purple-light: #1e1b3d; --orange-light: #2d1a10;
+    --amber-light: #2a1e08; --red-light: #2a1010; --lime-light: #1a2a0a;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; min-height: 100vh; }
+.app { max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+
+/* 헤더 */
+.top-bar { background: var(--card); border-bottom: 0.5px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.top-title { font-size: 17px; font-weight: 600; color: var(--text); }
+.date-nav { display: flex; align-items: center; gap: 8px; }
+.date-str { font-size: 13px; color: var(--text2); }
+.nav-btn { background: none; border: 0.5px solid var(--border); border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text2); font-size: 14px; }
+.nav-btn:active { background: var(--bg); }
+
+/* 탭 */
+.tab-bar { display: flex; background: var(--card); border-bottom: 0.5px solid var(--border); }
+.tab-btn { flex: 1; padding: 10px 4px; font-size: 12px; font-weight: 500; cursor: pointer; background: none; border: none; color: var(--text3); display: flex; flex-direction: column; align-items: center; gap: 3px; border-bottom: 2px solid transparent; }
+.tab-btn i { font-size: 18px; }
+.tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* 섹션 */
+.content { padding: 12px; }
+.section { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px 16px; margin-bottom: 10px; }
+.section-title { font-size: 12px; color: var(--text3); margin-bottom: 12px; display: flex; align-items: center; gap: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.section-title i { font-size: 14px; }
+
+/* 수면 */
+.sleep-display { display: flex; align-items: baseline; gap: 4px; margin-bottom: 12px; }
+.sleep-big { font-size: 36px; font-weight: 600; color: var(--text); line-height: 1; }
+.sleep-unit { font-size: 14px; color: var(--text2); }
+.sleep-track { height: 10px; background: var(--bg); border-radius: 5px; cursor: pointer; margin-bottom: 6px; }
+.sleep-fill { height: 10px; border-radius: 5px; background: var(--purple); transition: width .15s; }
+.sleep-ticks { display: flex; justify-content: space-between; margin-bottom: 14px; }
+.sleep-tick { font-size: 10px; color: var(--text3); }
+.sleep-adj { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.sleep-adj-btn { background: var(--bg); border: 0.5px solid var(--border); border-radius: 8px; padding: 6px 16px; font-size: 15px; cursor: pointer; color: var(--text); }
+.sleep-adj-btn:active { opacity: 0.7; }
+.sleep-adj-label { font-size: 12px; color: var(--text3); flex: 1; text-align: center; }
+.quality-row { display: flex; gap: 6px; }
+.q-btn { flex: 1; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 2px; font-size: 11px; text-align: center; cursor: pointer; color: var(--text2); background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.q-btn i { font-size: 18px; }
+.q-btn.active { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple); }
+
+/* 스트레스 */
+.stress-bar { display: flex; gap: 4px; }
+.stress-dot { flex: 1; height: 36px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text3); background: var(--bg); }
+.stress-dot.active { color: white; border: none; }
+
+/* 운동 */
+.ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ex-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; align-items: center; gap: 10px; background: var(--bg); }
+.ex-card.active { background: var(--green-light); border-color: var(--green-mid); }
+.ex-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text2); flex-shrink: 0; }
+.ex-card.active .ex-icon { background: var(--green-mid); color: white; }
+.ex-body { flex: 1; min-width: 0; }
+.ex-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.ex-card.active .ex-name { color: var(--green-dark); }
+.ex-ctrl { display: flex; align-items: center; gap: 5px; }
+.ex-btn { background: var(--card); border: 0.5px solid var(--border); border-radius: 5px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; color: var(--text2); }
+.ex-val { font-size: 13px; font-weight: 600; min-width: 22px; text-align: center; color: var(--text); }
+.ex-unit { font-size: 11px; color: var(--text3); }
+.ex-card.active .ex-val, .ex-card.active .ex-unit { color: var(--green-dark); }
+.ex-total { margin-top: 8px; padding: 8px 12px; background: var(--bg); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; }
+.ex-total-label { font-size: 12px; color: var(--text3); }
+.ex-total-val { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* 커피 카운터 */
+.counter-row { display: flex; align-items: center; gap: 12px; }
+.c-btn { background: var(--bg); border: 0.5px solid var(--border); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; color: var(--text); }
+.c-btn:active { opacity: 0.7; }
+.c-val { font-size: 24px; font-weight: 600; min-width: 32px; text-align: center; color: var(--text); }
+.c-unit { font-size: 14px; color: var(--text2); }
+
+/* 식사 */
+.meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.meal-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; cursor: pointer; background: var(--bg); }
+.meal-card.active { border-color: var(--green); background: var(--green-light); }
+.meal-card-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.meal-card.active .meal-card-label { color: var(--green-dark); }
+.meal-card-icon { font-size: 20px; color: var(--text3); margin-bottom: 6px; }
+.meal-card.active .meal-card-icon { color: var(--green); }
+.meal-dots { display: flex; justify-content: center; gap: 3px; }
+.mdot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--text3); }
+.mdot.on { background: var(--green); border-color: var(--green); }
+.meal-hint { font-size: 11px; color: var(--text3); margin-top: 8px; text-align: center; }
+
+/* 태그 */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { border: 0.5px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text2); background: var(--bg); }
+.tag:active { opacity: 0.7; }
+.tag.active { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+.tag.danger.active { background: var(--orange-light); border-color: var(--orange); color: var(--orange-dark); }
+.custom-input { width: 100%; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 14px; margin-top: 8px; background: var(--bg); color: var(--text); outline: none; }
+.custom-input:focus { border-color: var(--green); }
+
+/* 음주 */
+.alc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.drink-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px; text-align: center; background: var(--bg); }
+.drink-name { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.drink-ctrl { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.d-btn { background: var(--card); border: 0.5px solid var(--border); border-radius: 5px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; color: var(--text); }
+.d-val { font-size: 15px; font-weight: 600; min-width: 20px; text-align: center; color: var(--text); }
+
+/* 통증 */
+.pain-row { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pain-row:last-child { margin-bottom: 0; }
+.pain-label { font-size: 13px; color: var(--text); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+.pain-btns { display: flex; gap: 4px; }
+.p-btn { flex: 1; border: 0.5px solid var(--border); border-radius: 6px; padding: 7px 0; font-size: 11px; cursor: pointer; text-align: center; background: var(--bg); color: var(--text2); }
+.p-btn.pn { background: var(--lime-light); border-color: var(--lime); color: var(--lime-dark); }
+.p-btn.pm { background: var(--amber-light); border-color: var(--amber); color: #633806; }
+.p-btn.pd { background: var(--orange-light); border-color: var(--orange); color: var(--orange-dark); }
+.p-btn.ps { background: var(--red-light); border-color: var(--red); color: #501313; }
+
+/* 메모 */
+textarea { width: 100%; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-family: inherit; resize: none; background: var(--bg); color: var(--text); outline: none; line-height: 1.6; }
+textarea:focus { border-color: var(--green); }
+
+/* 저장 버튼 */
+.save-btn { width: 100%; padding: 14px; background: var(--green); color: white; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+.save-btn:active { opacity: 0.85; }
+
+/* 통계 */
+.range-row { display: flex; gap: 6px; margin-bottom: 12px; }
+.r-btn { border: 0.5px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--text2); }
+.r-btn.active { background: var(--card); color: var(--text); border-color: var(--text2); }
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.metric-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px; }
+.metric-lbl { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 500; }
+.metric-num { font-size: 26px; font-weight: 600; color: var(--text); }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.chart-toggle { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.ct-btn { border: 0.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; background: var(--bg); color: var(--text2); }
+.ct-btn.active { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple); }
+
+/* 인사이트 */
+.alert-card { border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.6; }
+.alert-card.warn { background: var(--amber-light); border: 0.5px solid var(--amber); color: #412402; }
+.alert-card.danger { background: var(--red-light); border: 0.5px solid var(--red); color: #501313; }
+.alert-card.ok { background: var(--lime-light); border: 0.5px solid var(--lime); color: var(--lime-dark); }
+.alert-card i { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+.ai-box { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px 16px; margin-bottom: 10px; }
+.ai-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ai-title { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.ai-run-btn { background: var(--green); color: white; border: none; border-radius: var(--radius-sm); padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.ai-run-btn:active { opacity: 0.85; }
+.ai-content { font-size: 14px; color: var(--text2); line-height: 1.8; min-height: 60px; }
+
+/* 토스트 */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+
+/* API 키 설정 */
+.api-section { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px 16px; margin-bottom: 10px; }
+.api-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+.api-input { width: 100%; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; background: var(--bg); color: var(--text); outline: none; margin-bottom: 8px; }
+.api-save-btn { background: var(--purple); color: white; border: none; border-radius: var(--radius-sm); padding: 7px 16px; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top-bar">
+    <div class="top-title"><i class="ti ti-heartbeat" style="color:var(--green)"></i> 건강 일기</div>
+    <div class="date-nav">
+      <button class="nav-btn" onclick="changeDay(-1)"><i class="ti ti-chevron-left"></i></button>
+      <span class="date-str" id="dateLabel"></span>
+      <button class="nav-btn" onclick="changeDay(1)" id="nextBtn"><i class="ti ti-chevron-right"></i></button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('record')"><i class="ti ti-pencil"></i>기록</button>
+    <button class="tab-btn" onclick="switchTab('stats')"><i class="ti ti-chart-line"></i>통계</button>
+    <button class="tab-btn" onclick="switchTab('insight')"><i class="ti ti-brain"></i>AI 분석</button>
+    <button class="tab-btn" onclick="switchTab('settings')"><i class="ti ti-settings"></i>설정</button>
+  </div>
+
+  <!-- 기록 탭 -->
+  <div id="tab-record" class="content">
+    <div class="section">
+      <div class="section-title"><i class="ti ti-moon-stars"></i> 지난밤 수면</div>
+      <div class="sleep-display">
+        <span class="sleep-big" id="sleepH">0</span><span class="sleep-unit">시간</span>
+        <span class="sleep-big" id="sleepM" style="font-size:24px;margin-left:4px">00</span><span class="sleep-unit">분</span>
+      </div>
+      <div class="sleep-track" id="sleepTrack"><div class="sleep-fill" id="sleepFill" style="width:0%"></div></div>
+      <div class="sleep-ticks"><span class="sleep-tick">0h</span><span class="sleep-tick">3h</span><span class="sleep-tick">6h</span><span class="sleep-tick">9h</span><span class="sleep-tick">12h</span></div>
+      <div class="sleep-adj">
+        <button class="sleep-adj-btn" onclick="adjustSleep(-30)">− 30분</button>
+        <span class="sleep-adj-label">탭하거나 버튼으로 조절</span>
+        <button class="sleep-adj-btn" onclick="adjustSleep(30)">+ 30분</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">수면 질</div>
+      <div class="quality-row">
+        <button class="q-btn" id="sq-0" onclick="setSQ(0)"><i class="ti ti-mood-sad"></i>매우 나쁨</button>
+        <button class="q-btn" id="sq-1" onclick="setSQ(1)"><i class="ti ti-mood-confuzed"></i>나쁨</button>
+        <button class="q-btn" id="sq-2" onclick="setSQ(2)"><i class="ti ti-mood-neutral"></i>보통</button>
+        <button class="q-btn" id="sq-3" onclick="setSQ(3)"><i class="ti ti-mood-smile"></i>좋음</button>
+        <button class="q-btn" id="sq-4" onclick="setSQ(4)"><i class="ti ti-mood-happy"></i>매우 좋음</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-mood-nervous"></i> 스트레스 지수</div>
+      <div class="stress-bar" id="stressBar"></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-run"></i> 운동 기록</div>
+      <div class="ex-grid" id="exGrid"></div>
+      <div class="ex-total">
+        <span class="ex-total-label"><i class="ti ti-clock" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>총 운동</span>
+        <span class="ex-total-val" id="exTotal">0분</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-coffee"></i> 커피</div>
+      <div class="counter-row">
+        <button class="c-btn" onclick="adj('coffee',-1)">−</button>
+        <span class="c-val" id="coffeeVal">0</span>
+        <button class="c-btn" onclick="adj('coffee',1)">+</button>
+        <span class="c-unit">잔</span>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-tools-kitchen-2"></i> 식사량</div>
+      <div class="meal-grid">
+        <div class="meal-card" id="mc-breakfast" onclick="cycleMeal('breakfast')"><div class="meal-card-label">아침</div><div class="meal-card-icon"><i class="ti ti-sunrise"></i></div><div class="meal-dots" id="md-breakfast"></div></div>
+        <div class="meal-card" id="mc-lunch" onclick="cycleMeal('lunch')"><div class="meal-card-label">점심</div><div class="meal-card-icon"><i class="ti ti-sun"></i></div><div class="meal-dots" id="md-lunch"></div></div>
+        <div class="meal-card" id="mc-dinner" onclick="cycleMeal('dinner')"><div class="meal-card-label">저녁</div><div class="meal-card-icon"><i class="ti ti-moon"></i></div><div class="meal-dots" id="md-dinner"></div></div>
+      </div>
+      <p class="meal-hint">탭: 안먹음 → 조금 → 반공기 → 한공기 → 과식</p>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-cookie"></i> 간식</div>
+      <div class="tags" id="snackTags">
+        <span class="tag" onclick="toggleTag(this)">과자</span><span class="tag" onclick="toggleTag(this)">과일</span><span class="tag" onclick="toggleTag(this)">아이스크림</span><span class="tag" onclick="toggleTag(this)">빵</span><span class="tag" onclick="toggleTag(this)">견과류</span><span class="tag" onclick="toggleTag(this)">초콜릿</span><span class="tag" onclick="toggleTag(this)">음료</span><span class="tag" onclick="toggleTag(this)">없음</span>
+      </div>
+      <input class="custom-input" id="snackCustom" placeholder="직접 입력...">
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-wine"></i> 음주</div>
+      <div class="tags">
+        <span class="tag active" id="alc-no" onclick="setAlc(false)">안 마심</span>
+        <span class="tag danger" id="alc-yes" onclick="setAlc(true)">마심</span>
+      </div>
+      <div id="alcDetail" style="display:none">
+        <div class="alc-grid" id="drinkCards"></div>
+        <p style="font-size:11px;color:var(--text3);margin-top:6px">+ / − 로 잔수 조절</p>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-heart-rate-monitor"></i> 통증 기록</div>
+      <div class="pain-row"><span class="pain-label"><i class="ti ti-arm" style="font-size:13px"></i>왼쪽 어깨</span><div class="pain-btns" id="pain-shoulder-left"></div></div>
+      <div class="pain-row"><span class="pain-label"><i class="ti ti-arm" style="font-size:13px"></i>오른쪽 어깨</span><div class="pain-btns" id="pain-shoulder-right"></div></div>
+      <div class="pain-row"><span class="pain-label"><i class="ti ti-stomach" style="font-size:13px"></i>위 통증</span><div class="pain-btns" id="pain-stomach"></div></div>
+      <div class="pain-row"><span class="pain-label"><i class="ti ti-heart" style="font-size:13px"></i>가슴/심장</span><div class="pain-btns" id="pain-chest"></div></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-heart-plus"></i> 기타 증상</div>
+      <div class="tags" id="symptomTags" style="margin-bottom:10px">
+        <span class="tag" onclick="toggleTag(this)">두통</span><span class="tag" onclick="toggleTag(this)">소화불량</span><span class="tag" onclick="toggleTag(this)">피로</span><span class="tag" onclick="toggleTag(this)">요통</span><span class="tag" onclick="toggleTag(this)">눈 피로</span><span class="tag" onclick="toggleTag(this)">불면</span><span class="tag" onclick="toggleTag(this)">없음</span>
+      </div>
+      <textarea id="memo" rows="3" placeholder="오늘 컨디션 메모..."></textarea>
+    </div>
+    <button class="save-btn" onclick="saveEntry()"><i class="ti ti-device-floppy"></i> 오늘 기록 저장</button>
+  </div>
+
+  <!-- 통계 탭 -->
+  <div id="tab-stats" class="content" style="display:none">
+    <div class="range-row">
+      <button class="r-btn active" onclick="setRange(7,this)">7일</button>
+      <button class="r-btn" onclick="setRange(14,this)">14일</button>
+      <button class="r-btn" onclick="setRange(30,this)">30일</button>
+    </div>
+    <div class="metric-grid" id="metricCards"></div>
+    <div class="section">
+      <div class="chart-toggle">
+        <button class="ct-btn active" onclick="switchChart('sleep',this)">수면</button>
+        <button class="ct-btn" onclick="switchChart('stress',this)">스트레스</button>
+        <button class="ct-btn" onclick="switchChart('exercise',this)">운동</button>
+        <button class="ct-btn" onclick="switchChart('coffee',this)">커피</button>
+        <button class="ct-btn" onclick="switchChart('pain',this)">통증</button>
+      </div>
+      <div style="position:relative;width:100%;height:220px"><canvas id="mainChart" role="img" aria-label="건강 추이"></canvas></div>
+    </div>
+    <div class="section">
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px">음주한 날 vs 안 한 날 — 평균 수면</div>
+      <div style="position:relative;width:100%;height:160px"><canvas id="alcChart" role="img" aria-label="음주와 수면 상관관계"></canvas></div>
+    </div>
+  </div>
+
+  <!-- AI 인사이트 탭 -->
+  <div id="tab-insight" class="content" style="display:none">
+    <div class="ai-box">
+      <div class="ai-header">
+        <div class="ai-title"><i class="ti ti-sparkles" style="color:var(--purple)"></i> AI 건강 분석</div>
+        <button class="ai-run-btn" onclick="runInsight()"><i class="ti ti-refresh"></i> 분석하기</button>
+      </div>
+      <div id="aiContent" class="ai-content">분석하기를 누르면 최근 기록을 바탕으로 AI가 건강 패턴과 특이사항을 알려드립니다.</div>
+    </div>
+    <div id="alertCards"></div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-calendar-stats"></i> 기록 현황</div>
+      <div id="recordStatus" style="font-size:14px;color:var(--text2);line-height:1.8"></div>
+    </div>
+  </div>
+
+  <!-- 설정 탭 -->
+  <div id="tab-settings" class="content" style="display:none">
+    <div class="api-section">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px"><i class="ti ti-key" style="color:var(--purple)"></i> Anthropic API 키</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">AI 분석 기능을 사용하려면 API 키가 필요합니다. <a href="https://console.anthropic.com" target="_blank" style="color:var(--green)">console.anthropic.com</a>에서 무료로 발급받을 수 있어요.</p>
+      <div class="api-label">API 키 입력</div>
+      <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-...">
+      <button class="api-save-btn" onclick="saveApiKey()"><i class="ti ti-check"></i> 저장</button>
+      <div id="apiStatus" style="font-size:12px;color:var(--text3);margin-top:8px"></div>
+    </div>
+    <div class="section">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:12px"><i class="ti ti-database"></i> 데이터 관리</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">모든 기록은 이 기기에 저장됩니다. 기기를 바꾸면 데이터가 없을 수 있어요.</p>
+      <div style="font-size:13px;color:var(--text2)" id="dataInfo"></div>
+    </div>
+    <div class="section">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px"><i class="ti ti-info-circle"></i> 홈 화면 추가 방법</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7">안드로이드 크롬에서:<br>1. 주소창 오른쪽 메뉴(⋮) 터치<br>2. "홈 화면에 추가" 선택<br>3. "추가" 확인<br><br>이제 앱처럼 바탕화면에서 바로 실행됩니다!</p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SC=['#1D9E75','#5DCAA5','#9FE1CB','#B4B2A9','#EF9F27','#BA7517','#D85A30','#993C1D','#A32D2D','#501313'];
+const PK=['shoulder-left','shoulder-right','stomach','chest'];
+const PL={'shoulder-left':'왼쪽 어깨','shoulder-right':'오른쪽 어깨','stomach':'위 통증','chest':'가슴/심장'};
+const DT=['소주','맥주','막걸리','와인','위스키','양주'];
+const EX=[{k:'walk',n:'걷기',i:'ti-walk'},{k:'run',n:'달리기',i:'ti-run'},{k:'weight',n:'웨이팅',i:'ti-barbell'},{k:'bike',n:'자전거',i:'ti-bike'}];
+const PLV=[{l:'없음',c:'pn'},{l:'약간',c:'pm'},{l:'보통',c:'pd'},{l:'심함',c:'ps'}];
+
+let S={stress:0,coffee:0,hasAlc:false,drinks:{},meals:{breakfast:0,lunch:0,dinner:0},pain:{'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1},exercise:{walk:0,run:0,weight:0,bike:0},sleepMins:0,sleepQ:-1};
+let offset=0,chartRange=7,chartType='sleep',mainCI=null,alcCI=null;
+
+function gdk(o=offset){const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10)}
+function fmtDate(o=offset){const d=new Date();d.setDate(d.getDate()+o);const dy=['일','월','화','수','목','금','토'];return`${d.getMonth()+1}/${d.getDate()}(${dy[d.getDay()]})`}
+function updLabel(){document.getElementById('dateLabel').textContent=fmtDate();const n=document.getElementById('nextBtn');n.disabled=offset>=0;n.style.opacity=offset>=0?'0.3':'1'}
+function changeDay(d){if(offset>=0&&d>0)return;save();offset+=d;load();updLabel()}
+
+function sd(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function ld(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function getAll(){const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('hd_'))ks.push(k)}return ks.sort()}
+function getRecent(n){const r=[];for(let i=n-1;i>=0;i--){const k='hd_'+gdk(-i);r.push({date:gdk(-i),data:ld(k)})}return r}
+function avg(a){return a.length?a.reduce((s,v)=>s+v,0)/a.length:0}
+
+function adjSleep(d){S.sleepMins=Math.max(0,Math.min(720,S.sleepMins+d));renderSleep()}
+function adjustSleep(d){adjSleep(d)}
+function renderSleep(){const h=Math.floor(S.sleepMins/60),m=S.sleepMins%60;document.getElementById('sleepH').textContent=h;document.getElementById('sleepM').textContent=String(m).padStart(2,'0');document.getElementById('sleepFill').style.width=Math.round(S.sleepMins/720*100)+'%'}
+function setSQ(q){S.sleepQ=q;for(let i=0;i<5;i++)document.getElementById('sq-'+i).classList.toggle('active',i===q)}
+document.getElementById('sleepTrack').addEventListener('click',function(e){const r=this.getBoundingClientRect();S.sleepMins=Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*720/30)*30;renderSleep()});
+
+function buildStress(){const b=document.getElementById('stressBar');b.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');d.className='stress-dot';d.textContent=i;d.onclick=()=>setStress(i);b.appendChild(d)}}
+function setStress(n){S.stress=n;document.querySelectorAll('.stress-dot').forEach((d,i)=>{if(i<n){d.classList.add('active');d.style.background=SC[i];d.style.borderColor=SC[i]}else{d.classList.remove('active');d.style.background='';d.style.borderColor=''}})}
+
+function buildEx(){const g=document.getElementById('exGrid');g.innerHTML='';EX.forEach(e=>{const v=S.exercise[e.k]||0;const c=document.createElement('div');c.className='ex-card'+(v>0?' active':'');c.id='exc-'+e.k;c.innerHTML=`<div class="ex-icon"><i class="ti ${e.i}"></i></div><div class="ex-body"><div class="ex-name">${e.n}</div><div class="ex-ctrl"><button class="ex-btn" onclick="adjEx('${e.k}',-5)">−</button><span class="ex-val" id="exv-${e.k}">${v}</span><button class="ex-btn" onclick="adjEx('${e.k}',5)">+</button><span class="ex-unit">분</span></div></div>`;g.appendChild(c)});updExTotal()}
+function adjEx(k,d){S.exercise[k]=Math.max(0,(S.exercise[k]||0)+d);document.getElementById('exv-'+k).textContent=S.exercise[k];document.getElementById('exc-'+k).className='ex-card'+(S.exercise[k]>0?' active':'');updExTotal()}
+function updExTotal(){document.getElementById('exTotal').textContent=EX.reduce((s,e)=>s+(S.exercise[e.k]||0),0)+'분'}
+
+function adj(k,d){if(k==='coffee'){S.coffee=Math.max(0,S.coffee+d);document.getElementById('coffeeVal').textContent=S.coffee}}
+function cycleMeal(m){S.meals[m]=(S.meals[m]+1)%5;renderMeal(m)}
+function renderMeal(m){const v=S.meals[m];document.getElementById('mc-'+m).className='meal-card'+(v>0?' active':'');const d=document.getElementById('md-'+m);d.innerHTML='';for(let i=0;i<4;i++){const dot=document.createElement('div');dot.className='mdot'+(i<v?' on':'');d.appendChild(dot)}}
+function toggleTag(el){el.classList.toggle('active')}
+
+function buildDrinks(){const c=document.getElementById('drinkCards');c.innerHTML='';DT.forEach(n=>{S.drinks[n]=S.drinks[n]||0;const card=document.createElement('div');card.className='drink-card';card.innerHTML=`<div class="drink-name">${n}</div><div class="drink-ctrl"><button class="d-btn" onclick="adjDrink('${n}',-1)">−</button><span class="d-val" id="drv-${n}">${S.drinks[n]}</span><button class="d-btn" onclick="adjDrink('${n}',1)">+</button></div>`;c.appendChild(card)})}
+function adjDrink(n,d){S.drinks[n]=Math.max(0,(S.drinks[n]||0)+d);document.getElementById('drv-'+n).textContent=S.drinks[n]}
+function setAlc(v){S.hasAlc=v;document.getElementById('alc-no').className='tag'+(v?'':' active');document.getElementById('alc-yes').className='tag danger'+(v?' active':'');document.getElementById('alcDetail').style.display=v?'block':'none';if(v)buildDrinks()}
+
+function buildPain(){PK.forEach(k=>{const c=document.getElementById('pain-'+k);c.innerHTML='';PLV.forEach((lv,i)=>{const b=document.createElement('button');b.className='p-btn';b.textContent=lv.l;b.onclick=()=>setPain(k,i);c.appendChild(b)})})}
+function setPain(k,i){S.pain[k]=i;document.getElementById('pain-'+k).querySelectorAll('.p-btn').forEach((b,j)=>{b.className='p-btn'+(j===i?' '+PLV[j].c:'')})}
+
+function collectExtra(){return{snacks:[...document.querySelectorAll('#snackTags .tag.active')].map(t=>t.textContent),snackCustom:document.getElementById('snackCustom').value,symptoms:[...document.querySelectorAll('#symptomTags .tag.active')].map(t=>t.textContent),memo:document.getElementById('memo').value}}
+function save(){sd('hd_'+gdk(),{...S,...collectExtra()})}
+function saveEntry(){save();showToast('✓ 저장되었습니다')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2200)}
+
+function load(){const data=ld('hd_'+gdk());document.querySelectorAll('#snackTags .tag,#symptomTags .tag').forEach(t=>t.classList.remove('active'));document.getElementById('memo').value='';document.getElementById('snackCustom').value='';setStress(0);S.coffee=0;document.getElementById('coffeeVal').textContent=0;S.drinks={};setAlc(false);S.meals={breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);S.pain={'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1};buildPain();S.exercise={walk:0,run:0,weight:0,bike:0};buildEx();S.sleepMins=0;S.sleepQ=-1;renderSleep();for(let i=0;i<5;i++)document.getElementById('sq-'+i).classList.remove('active');if(!data)return;setStress(data.stress||0);S.coffee=data.coffee||0;document.getElementById('coffeeVal').textContent=S.coffee;S.drinks=data.drinks||{};setAlc(data.hasAlc||false);S.meals=data.meals||{breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);if(data.pain){S.pain={...S.pain,...data.pain};PK.forEach(k=>{if(data.pain[k]>=0)setPain(k,data.pain[k])})}if(data.exercise){S.exercise={...S.exercise,...data.exercise};buildEx()}S.sleepMins=data.sleepMins||0;S.sleepQ=data.sleepQ!=null?data.sleepQ:-1;renderSleep();if(S.sleepQ>=0)setSQ(S.sleepQ);(data.snacks||[]).forEach(s=>document.querySelectorAll('#snackTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('snackCustom').value=data.snackCustom||'';(data.symptoms||[]).forEach(s=>document.querySelectorAll('#symptomTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('memo').value=data.memo||''}
+
+function switchTab(tab){['record','stats','insight','settings'].forEach((t,i)=>{document.getElementById('tab-'+t).style.display=t===tab?'block':'none';document.querySelectorAll('.tab-btn')[i].classList.toggle('active',t===tab)});if(tab==='stats')renderStats();if(tab==='insight')renderInsight();if(tab==='settings')renderSettings()}
+
+function setRange(r,btn){chartRange=r;document.querySelectorAll('.r-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderStats()}
+function switchChart(t,btn){chartType=t;document.querySelectorAll('.ct-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMainChart()}
+
+function renderStats(){renderMetrics();renderMainChart();renderAlcChart()}
+function renderMetrics(){const data=getRecent(chartRange).filter(d=>d.data);const n=data.length;const aSlp=avg(data.map(d=>d.data.sleepMins||0))/60;const aStr=avg(data.map(d=>d.data.stress||0));const tEx=data.reduce((s,d)=>s+(d.data.exercise?EX.reduce((ss,e)=>ss+(d.data.exercise[e.k]||0),0):0),0);document.getElementById('metricCards').innerHTML=`<div class="metric-card"><div class="metric-lbl">기록일수</div><div class="metric-num">${n}</div><div class="metric-sub">/ ${chartRange}일</div></div><div class="metric-card"><div class="metric-lbl">평균 수면</div><div class="metric-num">${aSlp.toFixed(1)}</div><div class="metric-sub">시간</div></div><div class="metric-card"><div class="metric-lbl">평균 스트레스</div><div class="metric-num">${aStr.toFixed(1)}</div><div class="metric-sub">/ 10</div></div><div class="metric-card"><div class="metric-lbl">총 운동</div><div class="metric-num">${tEx}</div><div class="metric-sub">분</div></div>`}
+function renderMainChart(){const data=getRecent(chartRange);const labels=data.map(d=>d.date.slice(5).replace('-','/'));let ds=[];const base={tension:0.3,pointRadius:3,fill:false,spanGaps:true};if(chartType==='sleep')ds=[{...base,label:'수면(h)',data:data.map(d=>d.data?+(d.data.sleepMins/60).toFixed(1):null),borderColor:'#534AB7',pointBackgroundColor:'#534AB7'}];else if(chartType==='stress')ds=[{...base,label:'스트레스',data:data.map(d=>d.data?d.data.stress:null),borderColor:'#D85A30',pointBackgroundColor:'#D85A30'}];else if(chartType==='exercise')ds=[{...base,label:'운동(분)',data:data.map(d=>d.data?EX.reduce((s,e)=>s+(d.data.exercise&&d.data.exercise[e.k]||0),0):null),borderColor:'#1D9E75',pointBackgroundColor:'#1D9E75'}];else if(chartType==='coffee')ds=[{...base,label:'커피(잔)',data:data.map(d=>d.data?d.data.coffee||0:null),borderColor:'#BA7517',pointBackgroundColor:'#BA7517'}];else ds=PK.map((k,i)=>{const cs=['#D85A30','#993C1D','#534AB7','#7F77DD'];return{...base,label:PL[k],data:data.map(d=>d.data&&d.data.pain&&d.data.pain[k]>=0?d.data.pain[k]:null),borderColor:cs[i],pointBackgroundColor:cs[i],borderDash:i>1?[4,3]:[]};});if(mainCI)mainCI.destroy();mainCI=new Chart(document.getElementById('mainChart'),{type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:chartType==='pain',labels:{boxWidth:10,font:{size:11},color:'#888780'}}},scales:{x:{ticks:{font:{size:10},color:'#888780',maxRotation:45},grid:{color:'rgba(136,135,128,0.1)'}},y:{ticks:{font:{size:10},color:'#888780'},grid:{color:'rgba(136,135,128,0.1)'},beginAtZero:true}}}})}
+function renderAlcChart(){const data=getRecent(chartRange).filter(d=>d.data);const alc=data.filter(d=>d.data.hasAlc);const no=data.filter(d=>!d.data.hasAlc);const aA=avg(alc.map(d=>+(d.data.sleepMins/60).toFixed(1)));const aN=avg(no.map(d=>+(d.data.sleepMins/60).toFixed(1)));if(alcCI)alcCI.destroy();alcCI=new Chart(document.getElementById('alcChart'),{type:'bar',data:{labels:['음주한 날','음주 안 한 날'],datasets:[{label:'평균 수면(h)',data:[+aA.toFixed(1),+aN.toFixed(1)],backgroundColor:['#F0997B','#9FE1CB'],borderColor:['#D85A30','#1D9E75'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:12,ticks:{font:{size:10},color:'#888780'},grid:{color:'rgba(136,135,128,0.1)'}},x:{ticks:{font:{size:11},color:'#888780'},grid:{display:false}}}}})}
+
+function renderInsight(){const data=getRecent(30).filter(d=>d.data);const n=data.length;document.getElementById('recordStatus').innerHTML=`최근 30일 중 <strong>${n}일</strong> 기록됨${n>0?`<br>최근 기록: ${data[data.length-1].date}`:''}`;renderAlerts(getRecent(14).filter(d=>d.data))}
+function renderAlerts(data){const el=document.getElementById('alertCards');el.innerHTML='';if(data.length<3){el.innerHTML='<div class="alert-card ok"><i class="ti ti-info-circle"></i>기록이 3일 이상 쌓이면 이상 감지가 시작됩니다.</div>';return}const alerts=[];PK.forEach(pk=>{const vals=data.filter(d=>d.data.pain&&d.data.pain[pk]>=0).map(d=>d.data.pain[pk]);if(vals.length>=4){const r=avg(vals.slice(-3)),e=avg(vals.slice(0,-3));if(r>e+0.5)alerts.push({t:'warn',m:`${PL[pk]} 통증이 최근 3일간 증가하는 추세입니다.`})}});const sv=data.map(d=>d.data.stress||0);if(avg(sv.slice(-3))>avg(sv.slice(0,-3))+1.5)alerts.push({t:'warn',m:`스트레스 지수가 최근 들어 높아졌습니다.`});const slpV=data.map(d=>(d.data.sleepMins||0)/60);const low=slpV.filter(v=>v>0&&v<6).length;if(low>=3)alerts.push({t:'danger',m:`최근 14일 중 ${low}일이 수면 6시간 미만입니다.`});const aD=data.filter(d=>d.data.hasAlc).length;if(aD>=5)alerts.push({t:'warn',m:`최근 14일 중 ${aD}일 음주했습니다.`});const aSlp=avg(slpV.filter(v=>v>0));if(aSlp>=7)alerts.push({t:'ok',m:`평균 수면 ${aSlp.toFixed(1)}시간으로 양호합니다!`});if(!alerts.length)alerts.push({t:'ok',m:'특이사항이 없습니다. 건강한 생활을 유지 중입니다!'});alerts.forEach(a=>{const d=document.createElement('div');d.className='alert-card '+a.t;const ic=a.t==='ok'?'ti-circle-check':a.t==='danger'?'ti-alert-triangle':'ti-bell';d.innerHTML=`<i class="ti ${ic}"></i><span>${a.m}</span>`;el.appendChild(d)})}
+
+async function runInsight(){const el=document.getElementById('aiContent');const apiKey=localStorage.getItem('apiKey');if(!apiKey){el.innerHTML='⚙️ 설정 탭에서 API 키를 먼저 입력해주세요.';return}el.innerHTML='<i class="ti ti-loader" style="font-size:16px"></i> AI가 분석 중입니다...';const data=getRecent(14).filter(d=>d.data);if(data.length<2){el.innerHTML='기록이 2일 이상 있어야 분석이 가능합니다.';return}const summary=data.map(d=>{const r=d.data;const ex=EX.reduce((s,e)=>s+(r.exercise&&r.exercise[e.k]||0),0);const pn=PK.filter(k=>r.pain&&r.pain[k]>=0).map(k=>`${PL[k]}:${PLV[r.pain[k]]?.l}`).join(',')||'없음';return`${d.date}: 수면${(r.sleepMins/60).toFixed(1)}h/수면질${r.sleepQ>=0?['매우나쁨','나쁨','보통','좋음','매우좋음'][r.sleepQ]:'미기록'}/스트레스${r.stress}/운동${ex}분/커피${r.coffee}잔/음주${r.hasAlc?'O':'X'}/통증[${pn}]`}).join('\n');try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`최근 ${data.length}일 건강 데이터:\n\n${summary}\n\n분석해서 한국어로 알려주세요:\n1. 주요 건강 패턴\n2. 주의가 필요한 특이사항\n3. 긍정적인 점\n4. 실용적인 개선 조언 1~2가지\n\n친절하고 따뜻한 톤으로, 자연스러운 문단으로 써주세요.`}]})});const json=await res.json();el.innerHTML=(json.content||[]).map(c=>c.text||'').join('').replace(/\n/g,'<br>')}catch(e){el.innerHTML='오류가 발생했습니다. API 키를 확인하거나 잠시 후 다시 시도해주세요.'}}
+
+function saveApiKey(){const k=document.getElementById('apiKeyInput').value.trim();if(!k){document.getElementById('apiStatus').textContent='키를 입력해주세요.';return}localStorage.setItem('apiKey',k);document.getElementById('apiStatus').textContent='✓ 저장되었습니다!';document.getElementById('apiKeyInput').value=''}
+function renderSettings(){const k=localStorage.getItem('apiKey');document.getElementById('apiStatus').textContent=k?'✓ API 키가 저장되어 있습니다.':'아직 API 키가 없습니다.';const all=getAll();document.getElementById('dataInfo').textContent=`저장된 기록: ${all.length}일치`}
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}
+buildStress();buildPain();buildEx();updLabel();load();
+</script>
+</body>
+</html>
