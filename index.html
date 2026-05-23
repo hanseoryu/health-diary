@@ -22,8 +22,7 @@
   --red: #A32D2D; --red-light: #FCEBEB;
   --lime-light: #EAF3DE; --lime: #639922; --lime-dark: #27500A;
   --bg: #f5f5f3; --card: #ffffff; --border: rgba(0,0,0,0.1);
-  --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
-  --radius: 12px; --radius-sm: 8px;
+  --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;  --radius: 12px; --radius-sm: 8px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -180,6 +179,16 @@ textarea:focus { border-color: var(--green); }
 .ai-content { font-size: 14px; color: var(--text2); line-height: 1.8; min-height: 60px; }
 
 /* 토스트 */
+.med-item-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.med-item-row:last-child{border-bottom:none}
+.med-item-name{flex:1;font-size:14px;color:var(--text)}
+.med-item-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.med-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;flex-shrink:0}
+.med-badge.med{background:#EEEDFE;color:#3C3489}
+.med-badge.sup{background:#E1F5EE;color:#085041}
+.med-check{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--text3)}
+.med-check.done{background:var(--green);border-color:var(--green);color:white}
+.med-check.skip{background:var(--amber-light);border-color:var(--amber);color:#633806}
 .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1a1a18; color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
 
 /* API 키 설정 */
@@ -321,6 +330,65 @@ textarea:focus { border-color: var(--green); }
       <div class="pain-row"><span class="pain-label"><i class="ti ti-heart" style="font-size:13px"></i>가슴/심장</span><div class="pain-btns" id="pain-chest"></div></div>
     </div>
     <div class="section">
+      <div class="section-title"><i class="ti ti-droplet"></i> 배변 활동</div>
+      <div style="font-size:12px;color:#378ADD;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:4px"><i class="ti ti-droplet" style="font-size:12px"></i> 소변</div>
+      <div class="pain-row" style="margin-bottom:12px">
+        <span class="pain-label">상태</span>
+        <div class="pain-btns">
+          <button class="p-btn" id="u-bad" onclick="setUrine('bad')">불량</button>
+          <button class="p-btn pn" id="u-ok" onclick="setUrine('ok')">양호</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#BA7517;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:4px"><i class="ti ti-circle" style="font-size:12px"></i> 대변</div>
+      <div class="pain-row" style="margin-bottom:8px">
+        <span class="pain-label">횟수</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="c-btn" style="width:28px;height:28px;font-size:16px" onclick="adjBowel(-1)">−</button>
+          <span id="bowelCnt" style="font-size:18px;font-weight:600;min-width:20px;text-align:center;color:var(--text)">0</span>
+          <span style="font-size:12px;color:var(--text3)">회</span>
+          <button class="c-btn" style="width:28px;height:28px;font-size:16px" onclick="adjBowel(1)">+</button>
+        </div>
+      </div>
+      <div class="pain-row" style="margin-bottom:8px">
+        <span class="pain-label">양</span>
+        <div class="pain-btns">
+          <button class="p-btn" id="ba-small" onclick="setBowelAmt('small')">적음</button>
+          <button class="p-btn" id="ba-normal" onclick="setBowelAmt('normal')">보통</button>
+          <button class="p-btn" id="ba-large" onclick="setBowelAmt('large')">많음</button>
+        </div>
+      </div>
+      <div class="pain-row" style="margin-bottom:0">
+        <span class="pain-label">묽기</span>
+        <div class="pain-btns">
+          <button class="p-btn" id="bs-hard" onclick="setBowelSt('hard')">딱딱</button>
+          <button class="p-btn" id="bs-normal" onclick="setBowelSt('normal')">정상</button>
+          <button class="p-btn" id="bs-soft" onclick="setBowelSt('soft')">묽음</button>
+          <button class="p-btn" id="bs-liquid" onclick="setBowelSt('liquid')">설사</button>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-pill"></i> 약 / 영양제</div>
+      <div id="medList"></div>
+      <div style="font-size:11px;color:var(--text3);margin:10px 0 12px;display:flex;gap:12px">
+        <span><i class="ti ti-check" style="color:var(--green);font-size:12px"></i> 복용</span>
+        <span><i class="ti ti-minus" style="color:#BA7517;font-size:12px"></i> 건너뜀</span>
+        <span><i class="ti ti-circle" style="font-size:12px;color:var(--text3)"></i> 미체크</span>
+      </div>
+      <div style="border-top:0.5px solid var(--border);padding-top:12px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">항목 추가</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input class="custom-input" id="medNewName" placeholder="이름" style="margin-top:0;flex:1">
+          <div style="display:flex;border:0.5px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0">
+            <button id="mtt-med" onclick="setMedType('med')" style="padding:0 10px;font-size:12px;cursor:pointer;background:#EEEDFE;color:#3C3489;border:none">약</button>
+            <button id="mtt-sup" onclick="setMedType('sup')" style="padding:0 10px;font-size:12px;cursor:pointer;background:none;color:var(--text3);border:none">영양제</button>
+          </div>
+          <button onclick="addMedItem()" style="background:var(--text);color:var(--bg);border:none;border-radius:8px;padding:0 12px;font-size:16px;cursor:pointer">+</button>
+        </div>
+        <input class="custom-input" id="medNewMemo" placeholder="메모 (아침 식후, 취침 전...)" style="margin-top:0;width:100%">
+      </div>
+    </div>
+    <div class="section">
       <div class="section-title"><i class="ti ti-heart-plus"></i> 기타 증상</div>
       <div class="tags" id="symptomTags" style="margin-bottom:10px">
         <span class="tag" onclick="toggleTag(this)">두통</span><span class="tag" onclick="toggleTag(this)">소화불량</span><span class="tag" onclick="toggleTag(this)">피로</span><span class="tag" onclick="toggleTag(this)">요통</span><span class="tag" onclick="toggleTag(this)">눈 피로</span><span class="tag" onclick="toggleTag(this)">불면</span><span class="tag" onclick="toggleTag(this)">없음</span>
@@ -401,7 +469,7 @@ const DT=['소주','맥주','막걸리','와인','위스키','양주'];
 const EX=[{k:'walk',n:'걷기',i:'ti-walk'},{k:'run',n:'달리기',i:'ti-run'},{k:'weight',n:'웨이팅',i:'ti-barbell'},{k:'bike',n:'자전거',i:'ti-bike'}];
 const PLV=[{l:'없음',c:'pn'},{l:'약간',c:'pm'},{l:'보통',c:'pd'},{l:'심함',c:'ps'}];
 
-let S={stress:0,coffee:0,hasAlc:false,drinks:{},meals:{breakfast:0,lunch:0,dinner:0},pain:{'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1},exercise:{walk:0,run:0,weight:0,bike:0},sleepMins:0,sleepQ:-1,weightKg:null,workHours:0,driveHours:0};
+let S={stress:0,coffee:0,hasAlc:false,drinks:{},meals:{breakfast:0,lunch:0,dinner:0},pain:{'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1},exercise:{walk:0,run:0,weight:0,bike:0},sleepMins:0,sleepQ:-1,weightKg:null,workHours:0,driveHours:0,urineOk:true,bowelCnt:0,bowelAmt:'',bowelSt:'',medItems:[]};
 let offset=0,chartRange=7,chartType='sleep',mainCI=null,alcCI=null;
 
 function gdk(o=offset){const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10)}
@@ -440,6 +508,29 @@ function fmtHours(v){const h=Math.floor(v),m=Math.round((v-h)*60);return m===0?`
 function adjHours(k,d){if(k==='work'){S.workHours=Math.round(Math.max(0,Math.min(24,S.workHours+d))*2)/2;document.getElementById('workVal').textContent=fmtHours(S.workHours)}else{S.driveHours=Math.round(Math.max(0,Math.min(24,S.driveHours+d))*2)/2;document.getElementById('driveVal').textContent=fmtHours(S.driveHours)}}
 function renderHours(){document.getElementById('workVal').textContent=fmtHours(S.workHours);document.getElementById('driveVal').textContent=fmtHours(S.driveHours)}
 
+function setUrine(v){S.urineOk=(v==='ok');document.getElementById('u-bad').className='p-btn'+(v==='bad'?' pd':'');document.getElementById('u-ok').className='p-btn'+(v==='ok'?' pn':'')}
+function adjBowel(d){S.bowelCnt=Math.max(0,S.bowelCnt+d);document.getElementById('bowelCnt').textContent=S.bowelCnt}
+function setBowelAmt(v){S.bowelAmt=v;['small','normal','large'].forEach(x=>{document.getElementById('ba-'+x).className='p-btn'+(x===v?' pn':'')})}
+function setBowelSt(v){S.bowelSt=v;['hard','normal','soft','liquid'].forEach(x=>{const cls=x==='liquid'?'ps':x==='soft'?'pd':'pn';document.getElementById('bs-'+x).className='p-btn'+(x===v?' '+cls:'')})}
+function renderBowel(){setUrine(S.urineOk?'ok':'bad');document.getElementById('bowelCnt').textContent=S.bowelCnt;['small','normal','large'].forEach(x=>document.getElementById('ba-'+x).className='p-btn'+(S.bowelAmt===x?' pn':''));['hard','normal','soft','liquid'].forEach(x=>{const cls=x==='liquid'?'ps':x==='soft'?'pd':'pn';document.getElementById('bs-'+x).className='p-btn'+(S.bowelSt===x?' '+cls:'')})}
+
+const DEFAULT_MEDS=[
+  {name:'홍삼류',memo:'',type:'sup',state:''},
+  {name:'비타민C',memo:'',type:'sup',state:''},
+  {name:'밀크씨슬',memo:'',type:'sup',state:''},
+  {name:'오메가3',memo:'',type:'sup',state:''},
+  {name:'위장약',memo:'',type:'med',state:''},
+  {name:'소화제',memo:'',type:'med',state:''},
+  {name:'진통제',memo:'',type:'med',state:''},
+  {name:'감기약',memo:'',type:'med',state:''},
+];
+let medAddType='med';
+function setMedType(t){medAddType=t;document.getElementById('mtt-med').style.background=t==='med'?'#EEEDFE':'none';document.getElementById('mtt-med').style.color=t==='med'?'#3C3489':'var(--text3)';document.getElementById('mtt-sup').style.background=t==='sup'?'#E1F5EE':'none';document.getElementById('mtt-sup').style.color=t==='sup'?'#085041':'var(--text3)'}
+function toggleMedCheck(btn,idx){const st=S.medItems[idx].state;const next=st===''?'done':st==='done'?'skip':'';S.medItems[idx].state=next;renderMedBtn(btn,next)}
+function renderMedBtn(btn,st){btn.className='med-check'+(st==='done'?' done':st==='skip'?' skip':'');btn.innerHTML=st==='skip'?'<i class="ti ti-minus"></i>':'<i class="ti ti-check"></i>'}
+function buildMedList(){const el=document.getElementById('medList');el.innerHTML='';S.medItems.forEach((m,i)=>{const row=document.createElement('div');row.className='med-item-row';row.innerHTML=`<div style="flex:1"><div class="med-item-name">${m.name}</div>${m.memo?`<div class="med-item-sub">${m.memo}</div>`:''}</div><span class="med-badge ${m.type}">${m.type==='med'?'약':'영양제'}</span><button class="med-check${m.state==='done'?' done':m.state==='skip'?' skip':''}" onclick="toggleMedCheck(this,${i})">${m.state==='skip'?'<i class="ti ti-minus"></i>':'<i class="ti ti-check"></i>'}</button>`;el.appendChild(row)})}
+function addMedItem(){const name=document.getElementById('medNewName').value.trim();if(!name)return;const memo=document.getElementById('medNewMemo').value.trim();S.medItems.push({name,memo,type:medAddType,state:''});document.getElementById('medNewName').value='';document.getElementById('medNewMemo').value='';buildMedList()}
+
 function buildDrinks(){const c=document.getElementById('drinkCards');c.innerHTML='';DT.forEach(n=>{S.drinks[n]=S.drinks[n]||0;const card=document.createElement('div');card.className='drink-card';card.innerHTML=`<div class="drink-name">${n}</div><div class="drink-ctrl"><button class="d-btn" onclick="adjDrink('${n}',-1)">−</button><span class="d-val" id="drv-${n}">${S.drinks[n]}</span><button class="d-btn" onclick="adjDrink('${n}',1)">+</button></div>`;c.appendChild(card)})}
 function adjDrink(n,d){S.drinks[n]=Math.max(0,(S.drinks[n]||0)+d);document.getElementById('drv-'+n).textContent=S.drinks[n]}
 function setAlc(v){S.hasAlc=v;document.getElementById('alc-no').className='tag'+(v?'':' active');document.getElementById('alc-yes').className='tag danger'+(v?' active':'');document.getElementById('alcDetail').style.display=v?'block':'none';if(v)buildDrinks()}
@@ -448,11 +539,11 @@ function buildPain(){PK.forEach(k=>{const c=document.getElementById('pain-'+k);c
 function setPain(k,i){S.pain[k]=i;document.getElementById('pain-'+k).querySelectorAll('.p-btn').forEach((b,j)=>{b.className='p-btn'+(j===i?' '+PLV[j].c:'')})}
 
 function collectExtra(){return{snacks:[...document.querySelectorAll('#snackTags .tag.active')].map(t=>t.textContent),snackCustom:document.getElementById('snackCustom').value,symptoms:[...document.querySelectorAll('#symptomTags .tag.active')].map(t=>t.textContent),memo:document.getElementById('memo').value}}
-function save(){sd('hd_'+gdk(),{...S,...collectExtra(),weightKg:S.weightKg,workHours:S.workHours,driveHours:S.driveHours})}
+function save(){sd('hd_'+gdk(),{...S,...collectExtra(),weightKg:S.weightKg,workHours:S.workHours,driveHours:S.driveHours,urineOk:S.urineOk,bowelCnt:S.bowelCnt,bowelAmt:S.bowelAmt,bowelSt:S.bowelSt,medItems:S.medItems})}
 function saveEntry(){save();showToast('✓ 저장되었습니다')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2200)}
 
-function load(){const data=ld('hd_'+gdk());document.querySelectorAll('#snackTags .tag,#symptomTags .tag').forEach(t=>t.classList.remove('active'));document.getElementById('memo').value='';document.getElementById('snackCustom').value='';setStress(0);S.coffee=0;document.getElementById('coffeeVal').textContent=0;S.drinks={};setAlc(false);S.meals={breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);S.pain={'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1};buildPain();S.exercise={walk:0,run:0,weight:0,bike:0};buildEx();S.sleepMins=0;S.sleepQ=-1;renderSleep();for(let i=0;i<5;i++)document.getElementById('sq-'+i).classList.remove('active');S.weightKg=null;renderWeight();S.workHours=0;S.driveHours=0;renderHours();if(!data)return;setStress(data.stress||0);S.coffee=data.coffee||0;document.getElementById('coffeeVal').textContent=S.coffee;S.drinks=data.drinks||{};setAlc(data.hasAlc||false);S.meals=data.meals||{breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);if(data.pain){S.pain={...S.pain,...data.pain};PK.forEach(k=>{if(data.pain[k]>=0)setPain(k,data.pain[k])})}if(data.exercise){S.exercise={...S.exercise,...data.exercise};buildEx()}S.sleepMins=data.sleepMins||0;S.sleepQ=data.sleepQ!=null?data.sleepQ:-1;renderSleep();if(S.sleepQ>=0)setSQ(S.sleepQ);S.weightKg=data.weightKg!=null?data.weightKg:null;renderWeight();S.workHours=data.workHours||0;S.driveHours=data.driveHours||0;renderHours();(data.snacks||[]).forEach(s=>document.querySelectorAll('#snackTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('snackCustom').value=data.snackCustom||'';(data.symptoms||[]).forEach(s=>document.querySelectorAll('#symptomTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('memo').value=data.memo||''}
+function load(){const data=ld('hd_'+gdk());document.querySelectorAll('#snackTags .tag,#symptomTags .tag').forEach(t=>t.classList.remove('active'));document.getElementById('memo').value='';document.getElementById('snackCustom').value='';setStress(0);S.coffee=0;document.getElementById('coffeeVal').textContent=0;S.drinks={};setAlc(false);S.meals={breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);S.pain={'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1};buildPain();S.exercise={walk:0,run:0,weight:0,bike:0};buildEx();S.sleepMins=0;S.sleepQ=-1;renderSleep();for(let i=0;i<5;i++)document.getElementById('sq-'+i).classList.remove('active');S.weightKg=null;renderWeight();S.workHours=0;S.driveHours=0;renderHours();S.urineOk=true;S.bowelCnt=0;S.bowelAmt='';S.bowelSt='';renderBowel();S.medItems=JSON.parse(JSON.stringify(DEFAULT_MEDS));buildMedList();if(!data)return;setStress(data.stress||0);S.coffee=data.coffee||0;document.getElementById('coffeeVal').textContent=S.coffee;S.drinks=data.drinks||{};setAlc(data.hasAlc||false);S.meals=data.meals||{breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);if(data.pain){S.pain={...S.pain,...data.pain};PK.forEach(k=>{if(data.pain[k]>=0)setPain(k,data.pain[k])})}if(data.exercise){S.exercise={...S.exercise,...data.exercise};buildEx()}S.sleepMins=data.sleepMins||0;S.sleepQ=data.sleepQ!=null?data.sleepQ:-1;renderSleep();if(S.sleepQ>=0)setSQ(S.sleepQ);S.weightKg=data.weightKg!=null?data.weightKg:null;renderWeight();S.workHours=data.workHours||0;S.driveHours=data.driveHours||0;renderHours();S.urineOk=data.urineOk!==undefined?data.urineOk:true;S.bowelCnt=data.bowelCnt||0;S.bowelAmt=data.bowelAmt||'';S.bowelSt=data.bowelSt||'';renderBowel();S.medItems=data.medItems&&data.medItems.length?data.medItems:JSON.parse(JSON.stringify(DEFAULT_MEDS));buildMedList();(data.snacks||[]).forEach(s=>document.querySelectorAll('#snackTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('snackCustom').value=data.snackCustom||'';(data.symptoms||[]).forEach(s=>document.querySelectorAll('#symptomTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('memo').value=data.memo||''}
 
 function switchTab(tab){['record','stats','insight','settings'].forEach((t,i)=>{document.getElementById('tab-'+t).style.display=t===tab?'block':'none';document.querySelectorAll('.tab-btn')[i].classList.toggle('active',t===tab)});if(tab==='stats')renderStats();if(tab==='insight')renderInsight();if(tab==='settings')renderSettings()}
 
