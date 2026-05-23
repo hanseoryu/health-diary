@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -230,6 +231,41 @@ textarea:focus { border-color: var(--green); }
       </div>
     </div>
     <div class="section">
+      <div class="section-title"><i class="ti ti-weight"></i> 체중</div>
+      <div class="counter-row">
+        <button class="c-btn" onclick="adjWeight(-0.1)">−</button>
+        <span class="c-val" id="weightVal" style="font-size:22px;min-width:60px">-</span>
+        <button class="c-btn" onclick="adjWeight(0.1)">+</button>
+        <span class="c-unit">kg</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="sleep-adj-btn" onclick="adjWeight(-1)">− 1kg</button>
+        <button class="sleep-adj-btn" onclick="adjWeight(1)">+ 1kg</button>
+        <button class="sleep-adj-btn" onclick="resetWeight()" style="color:var(--text3)">미측정</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><i class="ti ti-briefcase"></i> 근무 / 운전 시간</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:4px"><i class="ti ti-building" style="font-size:13px"></i> 근무시간</div>
+          <div class="counter-row">
+            <button class="c-btn" onclick="adjHours('work',-0.5)">−</button>
+            <span id="workVal" style="font-size:15px;font-weight:600;min-width:72px;text-align:center;color:var(--text)">0시간</span>
+            <button class="c-btn" onclick="adjHours('work',0.5)">+</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:4px"><i class="ti ti-steering-wheel" style="font-size:13px"></i> 운전시간</div>
+          <div class="counter-row">
+            <button class="c-btn" onclick="adjHours('drive',-0.5)">−</button>
+            <span id="driveVal" style="font-size:15px;font-weight:600;min-width:72px;text-align:center;color:var(--text)">0시간</span>
+            <button class="c-btn" onclick="adjHours('drive',0.5)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
       <div class="section-title"><i class="ti ti-mood-nervous"></i> 스트레스 지수</div>
       <div class="stress-bar" id="stressBar"></div>
     </div>
@@ -365,7 +401,7 @@ const DT=['소주','맥주','막걸리','와인','위스키','양주'];
 const EX=[{k:'walk',n:'걷기',i:'ti-walk'},{k:'run',n:'달리기',i:'ti-run'},{k:'weight',n:'웨이팅',i:'ti-barbell'},{k:'bike',n:'자전거',i:'ti-bike'}];
 const PLV=[{l:'없음',c:'pn'},{l:'약간',c:'pm'},{l:'보통',c:'pd'},{l:'심함',c:'ps'}];
 
-let S={stress:0,coffee:0,hasAlc:false,drinks:{},meals:{breakfast:0,lunch:0,dinner:0},pain:{'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1},exercise:{walk:0,run:0,weight:0,bike:0},sleepMins:0,sleepQ:-1};
+let S={stress:0,coffee:0,hasAlc:false,drinks:{},meals:{breakfast:0,lunch:0,dinner:0},pain:{'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1},exercise:{walk:0,run:0,weight:0,bike:0},sleepMins:0,sleepQ:-1,weightKg:null,workHours:0,driveHours:0};
 let offset=0,chartRange=7,chartType='sleep',mainCI=null,alcCI=null;
 
 function gdk(o=offset){const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10)}
@@ -397,6 +433,13 @@ function cycleMeal(m){S.meals[m]=(S.meals[m]+1)%5;renderMeal(m)}
 function renderMeal(m){const v=S.meals[m];document.getElementById('mc-'+m).className='meal-card'+(v>0?' active':'');const d=document.getElementById('md-'+m);d.innerHTML='';for(let i=0;i<4;i++){const dot=document.createElement('div');dot.className='mdot'+(i<v?' on':'');d.appendChild(dot)}}
 function toggleTag(el){el.classList.toggle('active')}
 
+function adjWeight(d){if(S.weightKg===null)S.weightKg=60;S.weightKg=Math.round((S.weightKg+d)*10)/10;S.weightKg=Math.max(20,Math.min(300,S.weightKg));document.getElementById('weightVal').textContent=S.weightKg.toFixed(1)}
+function resetWeight(){S.weightKg=null;document.getElementById('weightVal').textContent='-'}
+function renderWeight(){document.getElementById('weightVal').textContent=S.weightKg!==null?S.weightKg.toFixed(1):'-'}
+function fmtHours(v){const h=Math.floor(v),m=Math.round((v-h)*60);return m===0?`${h}시간`:`${h}시간 ${m}분`}
+function adjHours(k,d){if(k==='work'){S.workHours=Math.round(Math.max(0,Math.min(24,S.workHours+d))*2)/2;document.getElementById('workVal').textContent=fmtHours(S.workHours)}else{S.driveHours=Math.round(Math.max(0,Math.min(24,S.driveHours+d))*2)/2;document.getElementById('driveVal').textContent=fmtHours(S.driveHours)}}
+function renderHours(){document.getElementById('workVal').textContent=fmtHours(S.workHours);document.getElementById('driveVal').textContent=fmtHours(S.driveHours)}
+
 function buildDrinks(){const c=document.getElementById('drinkCards');c.innerHTML='';DT.forEach(n=>{S.drinks[n]=S.drinks[n]||0;const card=document.createElement('div');card.className='drink-card';card.innerHTML=`<div class="drink-name">${n}</div><div class="drink-ctrl"><button class="d-btn" onclick="adjDrink('${n}',-1)">−</button><span class="d-val" id="drv-${n}">${S.drinks[n]}</span><button class="d-btn" onclick="adjDrink('${n}',1)">+</button></div>`;c.appendChild(card)})}
 function adjDrink(n,d){S.drinks[n]=Math.max(0,(S.drinks[n]||0)+d);document.getElementById('drv-'+n).textContent=S.drinks[n]}
 function setAlc(v){S.hasAlc=v;document.getElementById('alc-no').className='tag'+(v?'':' active');document.getElementById('alc-yes').className='tag danger'+(v?' active':'');document.getElementById('alcDetail').style.display=v?'block':'none';if(v)buildDrinks()}
@@ -405,11 +448,11 @@ function buildPain(){PK.forEach(k=>{const c=document.getElementById('pain-'+k);c
 function setPain(k,i){S.pain[k]=i;document.getElementById('pain-'+k).querySelectorAll('.p-btn').forEach((b,j)=>{b.className='p-btn'+(j===i?' '+PLV[j].c:'')})}
 
 function collectExtra(){return{snacks:[...document.querySelectorAll('#snackTags .tag.active')].map(t=>t.textContent),snackCustom:document.getElementById('snackCustom').value,symptoms:[...document.querySelectorAll('#symptomTags .tag.active')].map(t=>t.textContent),memo:document.getElementById('memo').value}}
-function save(){sd('hd_'+gdk(),{...S,...collectExtra()})}
+function save(){sd('hd_'+gdk(),{...S,...collectExtra(),weightKg:S.weightKg,workHours:S.workHours,driveHours:S.driveHours})}
 function saveEntry(){save();showToast('✓ 저장되었습니다')}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2200)}
 
-function load(){const data=ld('hd_'+gdk());document.querySelectorAll('#snackTags .tag,#symptomTags .tag').forEach(t=>t.classList.remove('active'));document.getElementById('memo').value='';document.getElementById('snackCustom').value='';setStress(0);S.coffee=0;document.getElementById('coffeeVal').textContent=0;S.drinks={};setAlc(false);S.meals={breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);S.pain={'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1};buildPain();S.exercise={walk:0,run:0,weight:0,bike:0};buildEx();S.sleepMins=0;S.sleepQ=-1;renderSleep();for(let i=0;i<5;i++)document.getElementById('sq-'+i).classList.remove('active');if(!data)return;setStress(data.stress||0);S.coffee=data.coffee||0;document.getElementById('coffeeVal').textContent=S.coffee;S.drinks=data.drinks||{};setAlc(data.hasAlc||false);S.meals=data.meals||{breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);if(data.pain){S.pain={...S.pain,...data.pain};PK.forEach(k=>{if(data.pain[k]>=0)setPain(k,data.pain[k])})}if(data.exercise){S.exercise={...S.exercise,...data.exercise};buildEx()}S.sleepMins=data.sleepMins||0;S.sleepQ=data.sleepQ!=null?data.sleepQ:-1;renderSleep();if(S.sleepQ>=0)setSQ(S.sleepQ);(data.snacks||[]).forEach(s=>document.querySelectorAll('#snackTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('snackCustom').value=data.snackCustom||'';(data.symptoms||[]).forEach(s=>document.querySelectorAll('#symptomTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('memo').value=data.memo||''}
+function load(){const data=ld('hd_'+gdk());document.querySelectorAll('#snackTags .tag,#symptomTags .tag').forEach(t=>t.classList.remove('active'));document.getElementById('memo').value='';document.getElementById('snackCustom').value='';setStress(0);S.coffee=0;document.getElementById('coffeeVal').textContent=0;S.drinks={};setAlc(false);S.meals={breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);S.pain={'shoulder-left':-1,'shoulder-right':-1,stomach:-1,chest:-1};buildPain();S.exercise={walk:0,run:0,weight:0,bike:0};buildEx();S.sleepMins=0;S.sleepQ=-1;renderSleep();for(let i=0;i<5;i++)document.getElementById('sq-'+i).classList.remove('active');S.weightKg=null;renderWeight();S.workHours=0;S.driveHours=0;renderHours();if(!data)return;setStress(data.stress||0);S.coffee=data.coffee||0;document.getElementById('coffeeVal').textContent=S.coffee;S.drinks=data.drinks||{};setAlc(data.hasAlc||false);S.meals=data.meals||{breakfast:0,lunch:0,dinner:0};['breakfast','lunch','dinner'].forEach(renderMeal);if(data.pain){S.pain={...S.pain,...data.pain};PK.forEach(k=>{if(data.pain[k]>=0)setPain(k,data.pain[k])})}if(data.exercise){S.exercise={...S.exercise,...data.exercise};buildEx()}S.sleepMins=data.sleepMins||0;S.sleepQ=data.sleepQ!=null?data.sleepQ:-1;renderSleep();if(S.sleepQ>=0)setSQ(S.sleepQ);S.weightKg=data.weightKg!=null?data.weightKg:null;renderWeight();S.workHours=data.workHours||0;S.driveHours=data.driveHours||0;renderHours();(data.snacks||[]).forEach(s=>document.querySelectorAll('#snackTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('snackCustom').value=data.snackCustom||'';(data.symptoms||[]).forEach(s=>document.querySelectorAll('#symptomTags .tag').forEach(t=>{if(t.textContent===s)t.classList.add('active')}));document.getElementById('memo').value=data.memo||''}
 
 function switchTab(tab){['record','stats','insight','settings'].forEach((t,i)=>{document.getElementById('tab-'+t).style.display=t===tab?'block':'none';document.querySelectorAll('.tab-btn')[i].classList.toggle('active',t===tab)});if(tab==='stats')renderStats();if(tab==='insight')renderInsight();if(tab==='settings')renderSettings()}
 
